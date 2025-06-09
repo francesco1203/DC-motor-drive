@@ -1,0 +1,1209 @@
+\documentclass[a4paper,12pt]{article}
+
+% --- Pacchetti ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{tabularx}
+\usepackage{lmodern}
+\usepackage[italian]{babel}
+\usepackage{titlesec}
+\usepackage{amsmath} 
+\usepackage{geometry}
+\usepackage{ifthen}
+\usepackage{xstring}
+\usepackage{helvet}
+\usepackage{url}
+\renewcommand{\familydefault}{\sfdefault}  % Sans serif font style
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm}
+
+% --- Variabili personalizzabili ---
+\newcommand{\tipoDiLaurea}{Magistrale}        % triennale, magistrale, ecc.
+\newcommand{\corso}{Ingegneria Informatica - Ramo Automazione}
+\newcommand{\materiaTesi}{Azionamenti ed Elettronica Industriale}
+\newcommand{\thetitle}{Progettazione di un azionamento per motore in continua}
+\newcommand{\theauthor}{Schettini Francesco}
+\newcommand{\professore}{Prof. Ing. Luigi Rubino}               
+\newcommand{\annoAccademico}{2024/2025}
+
+
+% --- Inizio del documento ---
+\begin{document}
+\begin{titlepage}
+\setlength{\parindent}{0cm}
+
+% --- Header con logo e intestazioni ---
+{\fontsize{10}{12}\selectfont
+	\begin{tabular*}{\textwidth}{@{}l l @{\extracolsep{\fill}} r}
+		\raisebox{-.4\height}{\includegraphics[height=1.8cm]{Immagini/Altre/V.jpg}} & 
+		\parbox{5cm}{Università \\ degli Studi \\ della Campania \\ {\itshape Luigi Vanvitelli}} & 
+		{\itshape Dipartimento di Ingegneria}
+	\end{tabular*}
+}
+
+\vspace{5cm}
+
+% --- Titolo e corso ---
+{\centering
+	{\fontsize{14}{18} \itshape Corso di Laurea \tipoDiLaurea{} in\par}
+	{\fontsize{18}{22} \bfseries \corso \par}
+	\vspace{1.5cm}
+	{\fontsize{14}{18} \itshape Tesina di progetto in \materiaTesi \par}
+	\vspace{0.5cm}
+	{\fontsize{22}{26} \bfseries \thetitle \par}
+}
+
+\vfill
+
+% --- Informazioni autore e relatore/i ---
+
+\vspace{1cm}
+\begin{center}
+    \begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+        \textbf{Candidato:} Schettini Francesco & \textbf{Relatore:} Ing. Luigi Rubino \\
+        \textbf{Matricola:} A18000485 &  \\
+    \end{tabular}
+\end{center}
+\rule{\textwidth}{0.4pt}
+
+\vspace{1cm}
+
+\begin{center}
+	{\fontsize{10}{12}\bfseries A.A. 2024/2025}
+\end{center}
+
+\end{titlepage}
+
+
+\renewcommand{\contentsname}{Indice}
+\tableofcontents 
+
+\pagebreak
+
+
+\section{Introduzione}
+
+Lo scopo del presente progetto è la progettazione e simulazione di un azionamento per motore in corrente continua (DC) spazzolato, da impiegare in un'applicazione reale scelta dallo studente.
+
+Si farà uso della tecnica del controllo d'armatura. Tale metodo di controllo consente di agire direttamente sulla tensione applicata all'armatura del motore, imponendo la sua corrente, mantenendo costante il campo magnetico.
+
+L’obiettivo finale è quello di modellare l’intero sistema meccatronico, selezionare un motore adeguato, progettare l’anello di controllo per la velocità e la corrente, simulare il comportamento dinamico del sistema in ambiente Simulink/Matlab e verificare il rispetto delle specifiche prestazionali fissate.
+
+
+
+
+\pagebreak
+
+\section{Applicazione, specifiche e scelta del motore}
+
+\subsection{Specifiche di progetto}
+
+Si vuole progettare un azionamento per lo scorrimento di un tapis roulant.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{Immagini/Altre/tapis.PNG}
+    \caption{modello di tapis roulant}
+    \label{fig: tapis}
+\end{figure}
+
+
+Le specifiche dell'applicazione sono le seguenti:
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Caratteristica} & \textbf{Valore} \\ \hline
+    Velocità regolabile & 0 -- 18 km/h \\ \hline
+    Tempo massimo per raggiungere la velocità desiderata & 8 s \\ \hline
+    Portata massima & 170 kg \\ \hline
+    \end{tabular}
+    \caption{Specifiche primarie del tapis roulant}
+\end{table}
+
+\subsection{Struttura meccanica}
+Si prenda in esame la struttura meccanica descritta dal seguente CAD\footnote{\url{https://grabcad.com/library/conveyor-belt-123}.}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.35]{Immagini/Altre/CADtappeto.PNG}
+    \caption{CAD struttura meccanica}
+    \label{fig: CAD}
+\end{figure}
+
+\vspace{0.5cm}
+
+La struttura meccanica analizzata è composta dai seguenti elementi principali:
+
+\begin{itemize}
+    \item Due rulli identici, di cui uno motorizzato e uno inerte;
+    \item Un tappeto scorrevole, ancorato ai due rulli;
+    \item Un motore a corrente continua spazzolato, dotato di sensori;
+    \item Cuscinetti, utilizzati per garantire uno scorrimento favorevole del tappeto.
+\end{itemize}
+
+\vspace{0.5cm}
+
+Le dimensioni e caratteristiche geometriche dei componenti sono riassunte nella Tabella~\ref{tab:dati}.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|c|}
+        \hline
+        \textbf{Componente} & \textbf{Valore} \\
+        \hline
+        Dimensioni tappeto & $120\ \text{cm} \times 50\ \text{cm}$ \\
+        Massa tappeto & $5\ \text{kg}$ \\
+        Diametro rulli & $5\ \text{cm}$ \\
+        Massa di ciascun rullo & $6\ \text{kg}$ \\
+        \hline
+    \end{tabular}
+    \caption{Parametri fisici della struttura}
+    \label{tab:dati}
+\end{table}
+\vspace{0.5cm}
+ 
+A partire da questi dati è possibile ricavare i corrispondenti \textbf{momenti d'inerzia} dei componenti per l'analisi dinamica del sistema\footnote{Si è usato per il tappeto l'equivalente rotazionale di un'inerzia traslatoria}.
+
+\vspace{0.5cm}
+
+\[
+    J_{\text{rullo}} = \frac{1}{2} m_{\text{rullo}} r_{\text{rotazionale}}^2
+\]
+
+\[
+    J_{\text{tappeto}} = m_{\text{tappeto}} r_{\text{rotazionale}}^2
+\]
+
+\[
+    J_{\text{macchina}} = 2 J_{\text{rullo}} + J_{\text{tappeto}} = 0.0069\, kg\cdot m^2
+\]
+
+\vspace{0.5cm}
+
+Ricordiamo che montato al rullo di trazione, dunque all'albero, ci sarà il nostro motore. Pertanto, nel conto totale dell'inerzia servirà anche la sua inerzia.
+
+
+\subsection{Scelta del motore}
+
+Il settore applicativo ci fa ipotizzare di aver bisogno di un motore da almeno 1~kW. In seguito, verificheremo che il motore scelto sia adatto alla nostra applicazione.
+
+\vspace{0.5em} 
+
+Scegliamo il motore modello L80B14 a magneti permanenti della casa produttrice Elip Tagliente, di cui presentiamo in Tabella~\ref{tab: datiTargaMotore} i dati di targa.
+
+\vspace{0.3em} 
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|}
+    \hline
+    \textbf{Caratteristica} & \textbf{Valore} \\ \hline
+    Tensione nominale & 24 V \\ \hline
+    Corrente nominale & 54 A \\ \hline
+    Potenza nominale & 1000 W (meccanica) \\ \hline
+    Velocità nominale & 3000 RPM \(\rightarrow\) 314 rad/s \\ \hline
+    Coppia nominale & 3.18 Nm \\ \hline
+    Peso & 6.15 kg \\ \hline
+    Diametro rotore & 11 cm \\ \hline
+    \end{tabular}
+    \caption{Dati di targa del motore}
+    \label{tab: datiTargaMotore}
+\end{table}
+
+\vspace{0.5em} 
+
+Si osservi che sul sito di vendita\footnote{\url{https://www.shop.eliptagliente.it/prodotto/motore-elettrico-24vdc-1000w-3000rpm-l80b14/}.} sono indicate le sue principali applicazioni e si può constatare che una di queste è proprio l'impiego per tapis roulant.
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{Immagini/Altre/motoreElipTagliente.PNG}
+        \caption{Scheda tecnica}
+        \label{fig:motore1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{Immagini/Altre/motoreElipTaglienteDisegno.PNG}
+        \caption{Disegno in sezione}
+        \label{fig:motore2}
+    \end{subfigure}
+    \caption{Motore Elip Tagliente}
+    \label{fig:Motore1+2}
+\end{figure}
+
+\vspace{0.5em}
+
+
+Dai dati di targa forniti è stato possibile ricavarne altri
+
+\[
+    P_{a, \text{elettr}} = V_a \cdot I_a = 1296\,W
+\]
+
+\[
+    J_{\text{motore}} = \frac{1}{2} m_{\text{motore}} \left(\frac{d_{\text{motore}}}{2}\right)^2 = 0.009 \, kg \cdot m^2
+\]
+
+\vspace{0.5em}
+
+\subsection{Specifiche tecniche per la scelta del motore}
+
+Dalle specifiche primarie è possibile ricavare le seguenti grandezze utili per il dimensionamento del motore:
+
+\begin{itemize}
+    \item Velocità rotazionale massima necessaria
+    \item Coppia massima necessaria
+    \item Potenza richiesta
+\end{itemize}
+
+\vspace{0.5em}
+
+Dalle specifiche sulla velocità e la struttura dei rulli, si ricava la velocità angolare massima\footnote{usando la relazione \( v = \omega r \):}
+
+\[
+    \omega_{\text{max}} = \frac{v_{\text{tapis, max}} / 3.6}{r_{\text{rotazionale}}} = 200 \,rad/s
+\]
+
+\vspace{0.5em}
+ 
+Dalle specifiche sull'accelerazione, sappiamo che il sistema deve raggiungere la velocità massima in un tempo prestabilito, trasportando un carico pari alla portata massima. Usiamo una massa campione pari a \(1.25 \cdot p\), che offre due vantaggi:
+
+\begin{itemize}
+    \item un margine di robustezza ulteriore rispetto al semplice sovradimensionamento della potenza;
+    \item una modellazione più realistica dei picchi di massa percepita durante la corsa, in particolare nella fase di atterraggio del piede.
+\end{itemize}
+
+\vspace{0.5em}
+
+Calcoliamo l'inerzia rotazionale del carico\footnote{Così come per il nastro, è stata considerata l'inerzia rotazionale equivalente, pur essendo un'inerzia traslatoria}:
+\[
+    m_{\text{carico}} = \text{sovradimensionamento}_{\text{carico}} \cdot       p
+\]
+\[
+    J_{\text{carico}} = m_{\text{carico}} \cdot r_{\text{rotazionale}}^2= 0.133 \, kg \cdot m^2
+\]
+
+\vspace{0.5em}
+
+Così è possibile calcolare l'inerzia totale vista sull'albero motore:
+
+\vspace{0.3em}
+
+\[
+    J_{\text{tot}} = J_{\text{macchina}} + J_{\text{motore}} + J_{\text{carico}}
+\]
+
+\vspace{0.5em}
+
+Sapendo di dover raggiungere la velocità massima richiesta in un tempo fissato da specifica, si può calcolare l'accelerazione massima da imprimere:
+\vspace{0.5em}
+\[
+    \alpha_{\text{max}} = \frac{\omega_{\text{max}}}{\Delta t_{\text{acc,max}}}=25 \, rad/s^2
+\]
+
+\vspace{0.5em}
+
+Dall'accelerazione massima, è possibile trovare la coppia massima che il motore deve generare:
+\[
+    C_{\text{max}} = J_{\text{tot}} \cdot \alpha_{\text{max}} = 3.72 \,Nm
+\]
+
+\vspace{0.5em}
+Infine, si può calcolare la potenza meccanica necessaria a coprire il set applicativo:
+
+\[
+    P_{\text{richiesta}} = C_{\text{max}} \cdot \omega_{\text{max}} = 745\,W
+\]
+
+\vspace{0.5cm}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|c|}
+    \hline
+    \textbf{Grandezza} & \textbf{Valore richiesto} \\ \hline
+    Velocità angolare massima  & 200 rad/s\quad \\ \hline
+    Coppia massima & 3.72 Nm\quad \\ \hline
+    Potenza massima & 745 W\quad \\ \hline
+    \end{tabular}
+    \caption{Specifiche richieste al motore}
+\end{table}
+
+
+\subsection{Validazione della scelta e introduzione del riduttore}
+
+Pur ipotizzando un 10\% di perdite meccaniche (per attrito), la potenza del motore scelto risulta comunque ampiamente sufficiente per la nostra applicazione:
+
+\[
+    P_{a, \text{mecc,effettivo}} = 0.9 P_{a, \text{mecc}}=900\,W
+\]
+
+\vspace{0.5cm}
+
+Tuttavia, si osservi anche
+
+\begin{itemize}
+    \item La coppia massima richiesta non è soddisfatta dalla coppia nominale del motore
+    \item La velocità nominale del motore è ampiamente superiore a quella necessaria
+\end{itemize}
+
+\vspace{0.5cm}
+
+Si decide dunque di adottare un riduttore con rapporto di trasformazione \( R_{\text{rid}} \), scelto in modo tale da ottenere, a valle del riduttore:
+
+\[
+    \omega_{valle,rid} = \omega_{max}
+\]
+
+\vspace{0.5cm}
+A tal fine è necessario avere un rapporto di riduzione 
+
+\[
+    R_{rid} = \omega_{nom} / \omega_{max}  = 1.57
+\]
+
+\vspace{0.5cm}
+
+Scegliamo il riduttore della SEW ad uno stadio\footnote{\url{https://www.sew-eurodrive.it/prodotti/riduttori/riduttori_standard/riduttori_ad_ingranaggi_r/riduttori_ad_ingranaggi_r.html}.}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.6]{Immagini/Altre/riduttore.PNG}
+    \caption{Riduttore SEW ad uno stadio}
+    \label{fig: riduttore SEW}
+\end{figure}
+
+\vspace{0.5cm}
+
+L'inerzia per questo tipo di riduttori è dell'ordine dei $10^{-3}/10^{-4}\,kg \cdot m^2$, dunque trascurabile rispetto alle nostre grandezze inerziali.
+
+\vspace{0.5cm}
+
+Inoltre, segnaliamo che in genere tali riduttori causano una perdita di efficienza introducendo perdite meccaniche. Tuttavia, noi lo supporremo ideale.
+
+\vspace{0.5cm}
+Con l'introduzione del riduttore, così sono cambiate le caratteristiche nominali 
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|c|l|c|}
+    \hline
+    \textbf{Velocità richiesta} & 200 rad/s & \textbf{Velocità nominale ottenuta} & 200 rad/s \\ \hline
+    \textbf{Coppia richiesta}  &  3.72 Nm  & \textbf{Coppia nominale ottenuta}   & 4.99 Nm              \\ \hline
+    \end{tabular}
+    \caption{Confronto tra grandezze richieste e ottenute}
+\end{table}
+
+\vspace{0.3cm}
+
+Pertanto, la coppia motore-riduttore così scelta rientra nelle specifiche per la mia applicazione.
+
+\vspace{0.5cm}
+
+NOTA: è stato preferito avere un range largo in coppia piuttosto che in velocità, in quanto la velocità 200 rad/s è la massima da specifica della mia applicazione e non potrò mai averne di superiori.
+
+Al contempo, poter generare una coppia ancor più alta di quella già ipotizzata per il caso peggiore, rende ancor più robusta l'applicazione e fornisce margini di miglioramento futuro.
+
+\newpage
+
+\section{Modello del motore}
+
+\subsection{Parametrizzazione}
+
+Abbiamo bisogno di stimare o ricavare alcuni parametri fondamentali del motore:
+
+\begin{itemize}
+    \item Resistenza d'armatura \( R_a \)
+    \item Induttanza d'armatura \( L_a \)
+    \item Coefficiente di attrito viscoso \( \beta \)
+    \item Costanti del motore: \( k_t \) e \( k_v \)
+\end{itemize}
+
+\vspace{0.5cm}
+La Resistenza d'armatura si può calcolare a partire dalle perdite elettriche:
+
+\[
+    P_{\text{perdite,elett}} = P_{a, \text{elett}} - P_{a, \text{mecc}} = 296\,W
+\]
+
+\[
+    R_a = \frac{P_{\text{perdite, elett}}}{I_a^2}=0.10\,\Omega
+\]
+\vspace{0.5cm}
+
+L'induttanza d'armatura non è possibile calcolarla direttamente dalle specifiche, sarebbe necessario effettuare prove sul motore. Pertanto, scegliamo un valore tipico per questa classe di motori:
+
+\[
+    L_a = 1 \cdot 10^{-4} \ \text{H}
+\]
+
+\vspace{0.5cm}
+
+Il coeff. di attrito viscoso può essere calcolato a partire dalle perdite meccaniche (stimate al 10\% della potenza meccanica):
+
+\[
+    \beta = \frac{P_{\text{perdite,mecc}}}{\omega_{a, \text{motore}}^2}=1 \cdot 10^{-3}\,kg/ms
+\]
+
+\vspace{0.5cm}
+Per le costanti macchina, sappiamo dalla teoria che:
+
+\[
+    k_t = \frac{C_a}{I_a}=0.059
+\]
+
+\[
+    k_v = \frac{V_a - R_a \cdot \omega_{a, \text{motore}} \cdot \beta / k_t}{\omega_{a, \text{motore}}}=0.075
+\]
+
+\vspace{0.5cm}
+L'inerzia del motore, invece è stata già calcolata nei precedenti paragrafi.
+
+Notifichiamo che nel nostro modello di motore, assumeremo per semplicità che abbia inerzia quella della macchina intera.
+
+Infatti, la macchina è una componente fissa montata sull'albero motore. Preferiamo piuttosto modellare come carico tutto ciò che è variabile (come ad esempio persone che salgono sul tapis).
+
+\[
+    J = J_{\text{macchina}} + J_{\text{motore}}=0.0078\,kg \cdot m^2
+\]
+
+\vspace{0.5cm}
+
+Nelle Tabelle~\ref{tab: parametriFisiciMotore}-\ref{tab: costantiMacchinaMotore} sono riassunti i parametri del motore.
+
+\vspace{0.5cm}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|c|}
+    \hline
+    \textbf{Parametro} & \textbf{Valore} \\ \hline
+    Resistenza d'armatura  & 0.10 $\Omega$  \\
+    Induttanza d'armatura &  $1 \cdot 10^{-4}$ \ \text{H}\\
+    Inerzia (totale)  & $0.0078\,kg \cdot m^2$ \\
+    Coefficiente attrito viscoso  & $1 \cdot 10^{-3}\,kg/ms$ \\ \hline
+    \end{tabular}
+    \caption{Parametri del motore}
+    \label{tab: parametriFisiciMotore}
+\end{table}
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|c|}
+    \hline
+    \textbf{Parametro} & \textbf{Valore} \\ \hline
+    $k_t$ & 0.059  \\
+    $k_v$ & 0.075\\ \hline
+    \end{tabular}
+    \caption{Costanti macchina del motore}
+    \label{tab: costantiMacchinaMotore}
+\end{table}
+
+
+\subsection{Schema a blocchi del motore}
+
+
+Dalla teoria, il motore è descritto dal seguente schema a blocchi:
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{Immagini/Altre/motoreSchemaBlocchi.PNG}
+    \caption{Schema a blocchi del motore}
+    \label{fig: schema a blocchi}
+\end{figure}
+
+\vspace{0.3cm}
+
+Dai parametri ricavati nella sezione precedente, è stato possibile determinare le funzioni di trasferimento relative al dominio elettrico e meccanico:
+
+\vspace{0.5cm}
+
+$$
+P_{\text{elet}}(s) = \frac{1}{L_a s + R_a} \quad\quad
+P_{\text{mec}}(s) = \frac{1}{J_{\text{tot}} s + \beta}
+$$
+
+\vspace{0.5cm}
+
+Il modello del motore è stato implementato successivamente in Simulink, come riportato in Figura~\ref{fig:modello_simulink}.
+
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.6]{Immagini/Altre/motoreSimulink.PNG} 
+    \caption{Modello motore in corrente continua in Simulink}
+    \label{fig:modello_simulink}
+\end{figure}
+\vspace{0.5cm}
+
+Scegliendo i parametri calcolati in precedenza, eseguiamo la simulazione del modello applicando una tensione nominale $V_{nom}=24~V$. In figura \ref{fig: ciclo aperto} è riportato l'andamento della velocità angolare $\omega$.
+
+\vspace{0.3cm}
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.6]{Immagini/PlotMatlab/rispostaMotoreCicloAperto.png} 
+    \caption{Risposta a gradino del motore a ciclo aperto}
+    \label{fig: ciclo aperto}
+\end{figure}
+
+\vspace{0.5cm}
+
+Il valore di regime risulta essere 
+
+\[
+    \omega_{regime}= 314\,rad/s=\omega_a
+\]
+\vspace{0.3cm}
+
+Il fatto che la velocità angolare a regime coincida con la velocità nominale del motore, secondo i dati di targa, certifica la bontà dello schema implementativo.
+
+NOTA: non è stato tenuto conto del riduttore, che sarà modellato esternamente nello schema a blocchi finale.
+
+
+\subsection{Blocchi aggiuntivi}
+
+
+Per predisporre il motore al controllo, introduciamo i seguenti componenti:
+
+\begin{itemize}
+    \item Amplificatore
+    \item Dinamo tachimetrica
+    \item Saturatore in corrente
+    \item Riduttore
+\end{itemize}
+
+\subsubsection{Amplificatore di tensione}
+
+Immaginiamo di impiegare per il controllo un microcontrollore, che può generare tensioni tra $Gnd = 0$ e $HighVoltage = 5V$. Avremo bisogno di un amplificatore con guadagno $V_{nom}/HighVoltage$ per arrivare alle tensioni del motore.
+
+Lo supporremo lineare con guadagno:
+
+\vspace{0.3cm}
+
+\[
+    K_{amp} = \frac{V_{nom}}{HighVoltage} = \frac{24V}{5V}=4.8
+\]
+
+
+\vspace{0.5cm}
+
+Nello schema simulink, mostrato in Figura~\ref{fig:simulink_controllo_ampl_sat} è modellato come un puro guadagno con limite in saturazione.
+
+
+\subsubsection{Dinamo tachimetrica}
+
+Al fine di realizzare un controllo in velocità a ciclo chiuso, è necessario misurare tale grandezza e retroazionarla, in particolare, convertendola in tensione. A tale scopo viene utilizzato come trasduttore di velocità una dinamo tachimetrica.
+
+\vspace{0.5cm}
+
+Utilizzeremo la seguente dinamo, modello DT160 della casa produttrice Hohner.
+
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.5]{Immagini/Altre/dinamo.PNG}
+    \caption{Dinamo DT160 - Hohner SRL}
+    \label{fig:dinamo}
+\end{figure}
+
+\vspace{0.5cm}
+
+Dal suo datasheet\footnote{\url{https://hohner.it/datasheet/itaing/vari/Cat_DT1.pdf?x18985}} è possibile estrarre alcuni suoi utili dati di targa, riportati in Tabella~\ref{tab:targa_dinamo}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{|l|c|}
+    \hline
+    \textbf{Parametro} & \textbf{Valore} \\
+    \hline
+    Tensione d'uscita a velocità fissata & 60 V a 1000 RPM \\
+    \hline
+    Numero lamelle & 33 \\
+    \hline
+    Ripple Peak-to-Peak massimo & 1\% dell'output \\
+    \hline
+    \end{tabular}
+    \caption{Dati di targa della dinamo}
+    \label{tab:targa_dinamo}
+\end{table}
+
+Dalla prima entry della tabella è possibile ricavare la costante tachimetrica.
+
+\[
+    k_{dt} = \frac{V_{nom,\text{din}}}{\omega_{nom,\text{din}}} =0.57 \,V/(rad/s)
+\]
+
+Tale segnale dev'essere compatibile con l'ingresso del microcontrollore, ovvero [Gnd, HighVoltage]. Pertanto, la sua uscita dev'essere mappata con un de-amplificatore.
+
+\[
+    k_{\text{deamp}} = \frac{\text{High\_voltage}}{\omega_{\text{nom}} \cdot k_{dt}}
+\]
+
+\vspace{0.3cm}
+
+In questo modo, alla velocità massima del motore corrisponderà una tensione in retroazione di $HighVoltage = 5V$ e a velocità nulla una tensione nulla.
+
+\vspace{0.5cm}
+ 
+Sceglieremo durante il progetto di fare simulazioni con una dinamo ideale o reale.
+
+Per la dinamo reale modelleremo la componente rumore con la sua sola armonica fondamentale, che ha: 
+
+\begin{itemize}
+    \item Frequenza = Nlamelle $\cdot$ w (velocità di rotazione del motore)
+    \item Ampiezza = Ripple di tensione ($1\%$ dell'uscita ideale)
+\end{itemize}
+
+\vspace{0.5cm}
+
+In Simulink la dinamo è implementata come in Figura~\ref{fig:simulink_dinamo} ed è inserita nello schema totale di controllo come in Figura~\ref{fig:simulink_controllo_dinamo}.
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.5]{Immagini/Altre/dinamoSimulink.PNG}
+    \caption{Modello simulink della dinamo}
+    \label{fig:simulink_dinamo}
+\end{figure}
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.6]{Immagini/Altre/dinamoNelloSchemaSimulink.PNG}
+    \caption{Dinamo nello schema di controllo}
+    \label{fig:simulink_controllo_dinamo}
+\end{figure}
+
+
+\vspace{0.5cm}
+
+\subsubsection{Saturatore clamping in corrente}
+
+In fase di avvio del motore (o altri casi di discontinuità di funzionamento), la corrente di armatura raggiunge picchi molto alti e supera il valore nominale. In queste condizioni si danneggia il motore.
+
+Per questo motivo è stato necessario dotare il motore di un limitatore di corrente.
+
+\vspace{0.3cm}
+
+Il limitatore scelto di tipo "clamping" è costituito da un blocco soglia (DEAD ZONE) e da un guadagno. 
+
+Il blocco soglia fornisce un'uscita nulla per valori di ingresso tra le due soglie, mentre se l’ingresso assume valori al di fuori, restituisce in uscita la quantità in eccesso/difetto.
+Le soglie sono state fissate al valore della corrente di armatura nominale $I_{a} = 54~A$, consentito dal motore.
+
+Il guadagno $k_{compenso}$ è stato trovato con taratura manuale monitorando la corrente a tensione d'ingresso massima, finché non è risultata completamente satura attorno a Ia, consentendo valori al più del $20\%$. 
+
+Si è usato per la taratura, nello schema a ciclo chiuso, un regolatore fittizio a guadagno unitario e la dinamo supposta ideale.
+
+\vspace{0.5cm}
+
+L'implementazione Simulink è mostrata in Figura ~\ref{fig:simulink_controllo_ampl_sat}.
+
+\vspace{0.5cm}
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.7]{Immagini/Altre/amplificatoreSaturatoreSimulink.PNG}
+    \caption{Amplificatore e saturatore nello schema di controllo}
+    \label{fig:simulink_controllo_ampl_sat}
+\end{figure}
+
+\subsubsection{Riduttore}
+
+Dell'utilizzo del riduttore, al fine di adattare il motore alle specifiche in coppia e velocità della nostra applicazione, abbiamo già discusso.
+
+Mostriamo la sua modellazione Simulink in Figura ~\ref{fig:simulink_controllo_riduttore}.
+
+\vspace{0.5cm}
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.6]{Immagini/Altre/riduttoreSimulink.PNG}
+    \caption{Riduttore nello schema di controllo}
+    \label{fig:simulink_controllo_riduttore}
+\end{figure}
+
+\vspace{0.5cm}
+
+In pratica viene modellato con una serie di guadagni che scalano opportunamente le grandezze del motore.
+
+\[
+C_{\text{out}} = C \cdot R_{\text{rid}} \quad ; \quad
+\omega_{\text{out}} = \frac{\omega}{R_{\text{rid}}} \quad ; \quad
+Q_{\ell,in} = \frac{Q_{\ell}}{R_{\text{rid}}}
+\]
+
+\vspace{0.5cm}
+NOTA: è stata scalata anche la coppia di carico, in quanto questa è applicata direttamente all'albero motore sul quale si agganciano direttamente gli ingranaggi. Questi poi trasferiscono la coppia scalata al motore.
+
+
+\subsection{Schema finale pre-regolatore}
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.5]{Immagini/Altre/preRegolatoreSimulink.PNG}
+    \caption{Schema finale prima del regolatore}
+    \label{fig:simulink_pre_regolatore}
+\end{figure}
+
+
+\newpage
+
+\section{Progetto del controllore}
+L'obiettivo di questo progetto è quello di controllare in velocità il sistema. A tal scopo bisogna trovare un regolatore che, chiudendo il loop in Figura~\ref{fig:simulink_pre_regolatore}, garantisca ottime caratteristiche a ciclo chiuso come tempo di risposta breve, sovraelongazione limitata e buoni margini di robustezza.
+
+NOTA: in questa specifica applicazione l'asservimento in posizione non è necessario, dunque non viene realizzato.
+
+\subsection{Regolatore PI}
+\label{specifiche2}
+Per il controllo di velocità del motore utilizziamo un regolatore PI.
+
+\[
+    C(s)=K_p + \frac{K_i}{s}
+\]
+
+
+La sola azione proporzionale infatti non basta, perché per seguire il riferimento a gradino abbiamo bisogno di un guadagno molto alto. Considerando la dinamo rumorosa (che è il modello più vicino alla realtà) viene amplificato anche il rumore stesso.
+
+Questo causa un ripple di corrente molto alto, che usura il motore e ne riduce notevolmente il tempo di vita.
+
+Allora s'introduce il termine integrale che garantisce l'astatismo a gradino e allo stesso tempo reietta il rumore, operando da filtro.
+
+
+\begin{figure}[h!]
+\centering
+    \includegraphics[scale=0.7]{Immagini/Altre/PISimulink.PNG}
+    \caption{Schema PI Simulink}
+    \label{fig:simulink_PI}
+\end{figure}
+
+
+
+
+\subsubsection{Taratura del parametro $K_p$}
+
+Spegniamo la parte integrativa.
+
+Usiamo il modello di dinamo tachimetrica reale, che introduce il rumore responsabile di oscillazioni sulla corrente. Conduciamo simulazioni fino a soddisfare le seguenti condizioni:
+
+\begin{itemize}
+    \item Il ripple della corrente deve essere inferiore all'1\% di $I_{nom}$ (specifica di progetto);
+    \item La corrente deve rimanere entro il 10\% di $I_{nom}$ (per pochi secondi).
+\end{itemize}
+
+Per garantire la robustezza, consideriamo il caso peggiore: durante le simulazioni forniamo al motore la massima tensione d'ingresso, ovvero \texttt{HighVoltage}.
+
+\vspace{0.5cm}
+
+Sono state condotte delle simulazioni con uno script del tutto automatizzato che ci hanno restituito i seguenti valori:
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}{0.60\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{Immagini/PlotMatlab/confrontoCorrentiKp.png}
+    \caption{Ia al variare di $K_p$}
+    \label{fig:andamento_kp}
+\end{minipage}
+\hfill
+\begin{minipage}{0.38\textwidth}
+    \centering
+    \small
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{$K_p$} & \textbf{Ripple (A)} & \textbf{I Max (A)} \\
+        \hline
+        625.00 & 19.12 & 85.23 \\
+        312.50 & 16.63 & 69.61 \\
+        156.25 & 8.02  & 61.80 \\
+        78.12  & 2.43  & 57.89 \\
+        39.06  & 14.54 & 55.94 \\
+        19.53  & 4.60  & 54.97 \\
+        9.77   & 4.72  & 54.48 \\
+        4.88   & 2.21  & 54.23 \\
+        2.44   & 1.05  & 54.11 \\
+        1.22   & 0.52  & 54.05 \\
+        \hline
+    \end{tabular}
+    \captionof{table}{Simulazioni}
+    \label{tab:iterazioni_kp}
+\end{minipage}
+\end{figure}
+
+
+Per il soddisfacimento delle specifiche si è scelto quindi:
+
+\[
+    K_p = 1.22
+\]
+
+In figura è riportato l'andamento della corrente di armatura e della velocità con azione (solo) proporzionale trovata.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.6]{Immagini/PlotMatlab/controlloSoloProporzionale.png}
+    \caption{Correnteìe velocità con Kp=1.22}
+    \label{fig:kpscelto}
+\end{figure}
+
+\vspace{0.5cm}
+
+Si osserva che la corrente ha una zona di saturazione approssimabile a piatta e il ripple di corrente è così piccolo da essere impercettibile sul grafico.
+In tali condizioni, il rumore di misura non induce alcuna conseguenza.
+
+Riguardo invece l'inseguimento a gradino, come ci aspettavamo dalla teoria dei sistemi, il riferimento viene seguito con errore a regime finito, che però risulta essere notevole in quanto il guadagno è molto piccolo.
+
+
+\subsubsection{Taratura del parametro $K_i$}
+
+Studiamo la risposta a gradino del sistema al variare di Ki.  Vogliamo:
+
+\begin{itemize}
+    \item sovraelongazione della riposta a gradino in velocità, del massimo $20\%$
+\end{itemize}
+
+Stavolta diamo in ingresso un piccolo step, preoccupandoci che non mandi in saturazione il sistema.
+
+Non avendo problemi sul disturbo con la parte integrativa e avendo già tarato appositamente la parte proporzionale, userò il modello di dinamo ideale, ignorando il rumore.
+
+\vspace{0.5cm}
+
+Sono state eseguite delle simulazioni con uno script del tutto automatizzato che ci ha restituito i seguenti valori:
+
+\begin{figure}[h!]
+\centering
+\begin{minipage}{0.6\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{Immagini/PlotMatlab/confrontoUsciteKi.png} 
+    \caption{$w_{out}$ al variare di ki}
+    \label{fig:sovraelongazione_ki}
+\end{minipage}
+\hfill
+\begin{minipage}{0.38\textwidth}
+    \centering
+    \small
+    \begin{tabular}{|c|c|}
+        \hline
+        \textbf{$K_i$} & \textbf{Sovraelongazione (\%)} \\
+        \hline
+        1.00  & 0.0000 \\
+        1.30  & 0.0000 \\
+        1.69  & 0.0000 \\
+        2.20  & 0.0000 \\
+        2.86  & 0.0000 \\
+        3.71  & 0.0021 \\
+        4.83  & 0.0263 \\
+        6.27  & 0.0641 \\
+        8.16  & 0.1134 \\
+        10.60 & 0.1902 \\
+        13.79 & 0.3014 \\
+        \hline
+    \end{tabular}
+    \captionof{table}{Simulazioni}
+    \label{tab:sovraelongazione_ki}
+\end{minipage}
+\end{figure}
+
+
+Per il soddisfacimento delle specifiche si è scelto quindi:
+
+\[
+    K_i = 10.60
+\]
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.6]{Immagini/PlotMatlab/rispostaGradinoDopoTaratura.png}
+    \caption{Risposta a gradino con kp=1.22 e ki=10.60}
+    \label{fig:kiscelto}
+\end{figure}
+
+\vspace{0.5cm}
+
+Il grafico delle risposte a gradino in funzione di $K_i$ evidenzia che all’aumentare di $K_i$:
+\begin{itemize}
+    \item aumenta la sovraelongazione $S\%$;
+    \item diminuisce il tempo di risposta $T_a$.
+\end{itemize}
+
+Scegliendo un valore di $K_i$ che garantisce una sovraelongazione inferiore al 20\%, si è ottenuto un buon compromesso tra rapidità e stabilità della risposta.
+
+
+\vspace{0.5cm}
+Si osserva inoltre dalla Figura~\ref{fig:kiscelto} che, con i valori scelti, il sistema è in grado di seguire correttamente il riferimento con errore nullo a regime, come previsto dalla t. dei sistemi.
+
+
+\subsection{Fenomeno del Wind-up: correzione}
+
+Immaginiamo di voler far generare il controllo dallo stesso microcontrollore usato per generare il riferimento.
+Questo può generare il segnale di controllo solo in un range limitato [Gnd, HighVoltage], quindi per valori superiori (o inferiori), il controllo sarà saturato.
+
+Le simulazioni\footnote{Qui non riportate} mostrano che l'aggiunta del blocco di saturazione in simulink(vedi Figura ~\ref{fig: regolatoreAntiWU})  non degrada le prestazioni, in quanto a saturare era già il blocco amplificatore.
+
+Si manifesta però il fenomeno del wind-up sul controllo!
+
+\vspace{0.5cm}
+
+Risolveremo tale fenomeno usando il seguente schema di de-saturazione:
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.7]{Immagini/Altre/antiwindupSchema.PNG}
+    \caption{Schema anti wind-up}
+    \label{fig:antiWindup}
+\end{figure}
+
+\vspace{0.5cm}
+
+L'implementazione Simulink di tale schema è mostrata in Figura~\ref{fig: regolatoreAntiWU}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.6]{Immagini/Altre/regolatoreDesaturatoSimulink.PNG}
+    \caption{Regolatore con correzione anti wind-up}
+    \label{fig: regolatoreAntiWU}
+\end{figure}
+
+\vspace{0.5cm}
+
+Il coefficiente di desaturazione è stato trovato con una taratura manuale e fissato a $k_{desat}=2$. Più è alto e migliore è l'effetto di de-saturazione, ma amplifica di più anche eventuali disturbi non reiettati dal controllo. Anche qui quindi si è scelto un trade-off.
+
+\vspace{0.5cm}
+
+Facciamo delle simulazioni con e senza correzione sul wind-up e confrontiamole.
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{Immagini/PlotMatlab/controlloConfrontoWindUp.png}
+        \caption{Confronto segnale di controllo}
+        \label{fig:controlloConfontoWU}
+    \end{minipage}\hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{Immagini/PlotMatlab/uscitaConfrontoWindUp.png}
+        \caption{Confronto segnale d'uscita}
+        \label{fig:uscitaConfontoWU}
+    \end{minipage}
+\end{figure}
+
+\vspace{0.5cm}
+
+Si osserva che, compensando il fenomeno del \textit{wind-up}, aumentano notevolmente le prestazioni a ciclo chiuso:
+\begin{itemize}
+    \item diminuzione della sovraelongazione;
+    \item diminuzione del tempo di assestamento.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\subsection{Feed Forward}
+
+Introducendo la parte integrativa è stato garantito l'astatismo a gradino. Dalla teoria dei sistemi, sappiamo che un sistema di questo tipo segue la rampa con errore finito.
+
+Per seguire la rampa con errore nullo, introduciamo il controllo in Feed Forward, azione in avanti che lega il controllo direttamente al riferimento, senza passare per l'errore.
+
+In particolare, prende il riferimento di velocità desiderato e lo riporta, tramite un puro guadagno $K_{ff}$ come contributo al controllo, come mostrato in Figura~\ref{fig: FFSimulink}. 
+
+\vspace{0.5cm}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale=0.6]{Immagini/Altre/feedForwardSimulink.PNG}
+    \caption{Azione Feed Forward in Simulink}
+    \label{fig: FFSimulink}
+\end{figure}
+
+\vspace{0.5cm}
+
+Dalla teoria, il guadagno $K_{ff}$ è calcolato come segue:
+\[
+    k_{ff} = \frac{k_v}{k_{amp} \cdot k_{dt} \cdot k_{deamp}}=0.98
+\]
+
+\vspace{0.5cm}
+
+Come si può notare dalla Figura\ref{fig: rispostaArampa}, il sistema adesso segue con errore nullo a regime il riferimento a rampa.
+
+\vspace{0.5cm}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.60]{Immagini/PlotMatlab/rispostaRampaFF.png}
+    \caption{Risposta a rampa, confronto}
+    \label{fig: rispostaArampa}
+\end{figure}
+
+\newpage
+
+
+\section{Modellistica degli ingressi}
+
+Dopo aver progettato il controllore, ci occupiamo di modellare gli ingressi al sistema:
+
+\begin{itemize}
+    \item disturbo in coppia
+    \item riferimento di velocità
+\end{itemize}
+
+\subsection{Disturbo: coppia di carico}
+
+Fin'ora abbiamo tenuto il nostro motore a vuoto, ovvero senza carico (eccetto la struttura meccanica, la cui inerzia però è stata inglobata in quella del motore).
+
+Modelliamo la presenza di una persona sul nastro con una coppia di carico, in prima approssimazione come una coppia di attrito generata tra il tappeto e il rullo.
+
+\vspace{0.3cm}
+
+Nell'approssimazione più semplice, per una massa m che sale sul tapis roulant, coefficiente d'attrito $\mu$:
+
+\vspace{0.3cm}
+
+\[
+    F_{\text{attr}} = m_{\text{carico}} \cdot g \cdot \mu
+\]
+\[
+    M_{\text{attr}} = F_{\text{attr}} \cdot r_{\text{rotazionale}}
+\]
+
+\vspace{0.1cm}
+
+Ad esempio, con una massa di 120 kg otteniamo una coppia di carico di $Q_l = 1.47\,Nm$. Vediamo in Figura~\ref{fig: disturbo} la risposta del sistema a ingresso gradino + rampa, con e senza tale disturbo, modellato come un gradino.
+
+Siccome l'attrito viene generato solo dalla partenza, la coppia di carico avrà lo step time in corrispondenza dell'avvio del moto.
+
+\vspace{0.5cm}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.65]{Immagini/PlotMatlab/rispostaCoppiaCarico.png}
+    \caption{Risposta al disturbo}
+    \label{fig: disturbo}
+\end{figure}
+
+Nonostante il disturbo, il motore segue il riferimento con lieve, ma inevitabile degrado delle prestazioni.
+
+
+\subsection{Riferimento: legge dei moti}
+
+Quando un utilizzatore sceglie una data velocità di funzionamento del tapis roulant, è chiaro che non possiamo dare al sistema un riferimento a gradino, in quanto il tappeto avrebbe uno sbalzo improvviso. Il comfort d'utilizzo prevede che la velocità di regime si raggiunga dolcemente e senza brusche accelerazioni.
+
+\vspace{0.3cm}
+
+Genereremo pertanto dei riferimenti di velocità morbidi da accelerazione a forma triangolare.
+
+Le scelte progettuali, su base empirica, saranno le seguenti:
+
+\begin{itemize}
+    \item Il tempo di raggiungimento della velocità desiderata sarà ottenuto da: 
+    \[
+    T_{\text{nec}} : \omega_{\text{fin}} = \Delta t_{\text{nec, max}} : \omega_{\text{max}}
+    \]
+    
+    \item La metà di tale intervallo di tempo sarà dedicato alla salita dell'accelerazione e la restante metà alla discesa.
+    
+    \item Con tale forma geometrica prevista per $a_{\text{max}}$, essendo la velocità finale (o comunque la variazione di velocità richiesta) l'integrale dell'accelerazione, si può trovare banalmente che:
+    \[
+    \omega_{\text{fin}} = \frac{1}{2} a_{\text{max}} \cdot \left( \frac{T_{\text{nec}}}{2} \right)
+    \quad \Rightarrow \quad 
+    a_{\text{max}} = \frac{4 \cdot \omega_{\text{fin}}}{T_{\text{nec}}}
+    \]
+\end{itemize}
+
+In Figure\ref{fig: leggiDIMoto}-\ref{fig: rispostaMorbida} è stata simulata una partenza da fermo fino a una velocità $v_{fin}=12\,km/h\Rightarrow w_{fin}=133.3\,rad/s$ scelta dall’utente.
+
+\vspace{0.5cm}
+
+
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[scale = 0.5]{Immagini/PlotMatlab/leggiMotoDaFermo.png}
+        \caption{Riferimento, da leggi di moto}
+        \label{fig: leggiDIMoto}
+    \end{minipage}\hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[scale = 0.5]{Immagini/PlotMatlab/rispostaLeggiMoto.png}
+        \caption{Risposta morbida}
+        \label{fig: rispostaMorbida}
+    \end{minipage}
+\end{figure}
+
+
+\vspace{0.5cm}
+
+Come si vede, la risposta del motore segue il riferimento, pur con un piccolissimo errore (praticamente inavvertibile) durante il tratto in parabola.
+
+\vspace{0.3cm}
+
+Si osservi che tali leggi di moto sono facilmente generalizzabili al caso in cui si parta da qualsiasi velocità. L'integrale dell'accelerazione rappresenterà in quel caso la variazione della velocità a partire da un certo $v_0$.
+
+In Figura \ref{fig: decelazione} ad esempio, è riportata la generazione di una decelerazione da $v_0=12\,km/h \Rightarrow w_{0}=133.3\,rad/s $ a velocità $v_{fin}=5\,km/h\Rightarrow w_{fin}=55.6\,rad/s$.
+
+\vspace{0.5cm}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.5]{Immagini/PlotMatlab/leggiMotoDecelerazione.png}
+    \caption{Riferimento in decelerazione}
+    \label{fig: decelazione}
+\end{figure}
+
+\vspace{0.5cm}
+
+Daremo per scontato che il microcontrollore sappia generare tali riferimenti con appositi algoritmi.
+
+\newpage
+
+
+\section{Conclusioni}
+
+Il progetto ha avuto come obiettivo lo studio, la modellazione e il controllo di un sistema di trazione per tapis roulant basato su motore in corrente continua. Dopo un’accurata selezione del motore e la verifica delle sue prestazioni rispetto ai requisiti meccanici del sistema, è stato modellato e simulato in ambiente \textit{Simulink}.
+
+L'adozione di una logica di controllo PI, con integrazione delle tecniche di anti-windup e feedforward, ha permesso di ottenere un sistema stabile e conforme alle specifiche richieste: ripple di corrente contenuto, sovraelongazione contenuta, risposta fluida e robusta ai disturbi.
+
+È stata inoltre sviluppata una logica di generazione del riferimento in velocità a forma triangolare, per garantire comfort e sicurezza d'uso durante il funzionamento del tapis roulant.
+
+\bigskip
+
+Tra gli sviluppi futuri si potrebbero considerare:
+
+\begin{itemize}
+    \item lo studio approfondito di disturbi, attriti e parametri del motore al fine di avere una modellistica più coerente con la realtà;
+    \item la scelta di un microcontrollore adatto allo scopo e la scrittura dell'algoritmo di controllo e generazione di riferimenti; 
+    \item l'utilizzo di tecniche di controllo alternative al classico controllo PI (ad esempio tecniche di controllo robusto per abbattere il peso delle numerose incertezze);
+    \item l’implementazione e il testing su su hardware reale con feedback da sensori fisici.
+\end{itemize}
+
+\bigskip
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[scale = 0.5]{Immagini/Altre/regolatoreFinale.PNG}
+    \caption{Schema finale}
+    \label{fig: modelloFinale}
+\end{figure}
+
+\vspace{0.5cm}
+
+
+\newpage
+
+\section*{Riferimenti}
+
+Il progetto completo, comprensivo di script \textsc{Matlab} e modello \textsc{Simulink} per la simulazione del sistema, è disponibile al seguente link:
+
+\vspace{0.5cm}
+
+\url{https://github.com/francesco1203/DC_motor_drive}
+
+
+
+\end{document}
