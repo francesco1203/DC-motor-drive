@@ -244,7 +244,7 @@ Si osservi che sul sito di vendita\footnote{\url{https://www.shop.eliptagliente.
 Dai dati di targa forniti è stato possibile ricavarne altri
 
 \[
-    P_{a, \text{elettr}} = V_a \cdot I_a = 1296\,W
+    P_{nom, \text{elettr}} = V_{nom} \cdot I_{nom} = 1296\,W
 \]
 
 \[
@@ -297,7 +297,7 @@ Così è possibile calcolare l'inerzia totale vista sull'albero motore:
 \vspace{0.3em}
 
 \[
-    J_{\text{tot}} = J_{\text{macchina}} + J_{\text{motore}} + J_{\text{carico}}
+    J_{\text{tot}} = J_{\text{macchina}} + J_{\text{motore}} + J_{\text{carico}} = 0.149\,kg \cdot m^2
 \]
 
 \vspace{0.5em}
@@ -339,10 +339,10 @@ Infine, si può calcolare la potenza meccanica necessaria a coprire il set appli
 
 \subsection{Validazione della scelta e introduzione del riduttore}
 
-Pur ipotizzando un 10\% di perdite meccaniche (per attrito), la potenza del motore scelto risulta comunque ampiamente sufficiente per la nostra applicazione:
+Pur ipotizzando un 10\% di perdite meccaniche (per attrito), la potenza effettiva del motore scelto risulta comunque ampiamente sufficiente per la nostra applicazione:
 
 \[
-    P_{a, \text{mecc,effettivo}} = 0.9 P_{a, \text{mecc}}=900\,W
+    P_{nom, \text{mecc,eff}} = 0.9 P_{nom, \text{mecc}}=900\,W
 \]
 
 \vspace{0.5cm}
@@ -359,7 +359,7 @@ Tuttavia, si osservi anche
 Si decide dunque di adottare un riduttore con rapporto di trasformazione \( R_{\text{rid}} \), scelto in modo tale da ottenere, a valle del riduttore:
 
 \[
-    \omega_{valle,rid} = \omega_{max}
+    \omega_{out,rid} = \omega_{max}
 \]
 
 \vspace{0.5cm}
@@ -413,6 +413,8 @@ Al contempo, poter generare una coppia ancor più alta di quella già ipotizzata
 
 \newpage
 
+
+
 \section{Modello del motore}
 
 \subsection{Parametrizzazione}
@@ -430,11 +432,11 @@ Abbiamo bisogno di stimare o ricavare alcuni parametri fondamentali del motore:
 La Resistenza d'armatura si può calcolare a partire dalle perdite elettriche:
 
 \[
-    P_{\text{perdite,elett}} = P_{a, \text{elett}} - P_{a, \text{mecc}} = 296\,W
+    P_{\text{perd,elett}} = P_{nom, \text{elett}} - P_{nom, \text{mecc}} = 296\,W
 \]
 
 \[
-    R_a = \frac{P_{\text{perdite, elett}}}{I_a^2}=0.10\,\Omega
+    R_a = \frac{P_{\text{perdite, elett}}}{I_{nom}^2}=0.10\,\Omega
 \]
 \vspace{0.5cm}
 
@@ -449,18 +451,18 @@ L'induttanza d'armatura non è possibile calcolarla direttamente dalle specifich
 Il coeff. di attrito viscoso può essere calcolato a partire dalle perdite meccaniche (stimate al 10\% della potenza meccanica):
 
 \[
-    \beta = \frac{P_{\text{perdite,mecc}}}{\omega_{a, \text{motore}}^2}=1 \cdot 10^{-3}\,kg/ms
+    \beta = \frac{P_{\text{perd,mecc}}}{\omega_{nom}^2}=1 \cdot 10^{-3}\,kg/ms
 \]
 
 \vspace{0.5cm}
 Per le costanti macchina, sappiamo dalla teoria che:
 
 \[
-    k_t = \frac{C_a}{I_a}=0.059
+    k_t = \frac{C_{nom}}{I_{nom}}=0.059
 \]
 
 \[
-    k_v = \frac{V_a - R_a \cdot \omega_{a, \text{motore}} \cdot \beta / k_t}{\omega_{a, \text{motore}}}=0.075
+    k_v = \frac{V_{nom} - R_a \cdot \omega_{nom} \cdot \beta / k_t}{\omega_{nom}}=0.075
 \]
 
 \vspace{0.5cm}
@@ -471,7 +473,7 @@ Notifichiamo che nel nostro modello di motore, assumeremo per semplicità che ab
 Infatti, la macchina è una componente fissa montata sull'albero motore. Preferiamo piuttosto modellare come carico tutto ciò che è variabile (come ad esempio persone che salgono sul tapis).
 
 \[
-    J = J_{\text{macchina}} + J_{\text{motore}}=0.0078\,kg \cdot m^2
+    J_{mm} = J_{\text{macchina}} + J_{\text{motore}}=0.0078\,kg \cdot m^2
 \]
 
 \vspace{0.5cm}
@@ -528,7 +530,7 @@ Dai parametri ricavati nella sezione precedente, è stato possibile determinare 
 
 $$
 P_{\text{elet}}(s) = \frac{1}{L_a s + R_a} \quad\quad
-P_{\text{mec}}(s) = \frac{1}{J_{\text{tot}} s + \beta}
+P_{\text{mec}}(s) = \frac{1}{J_{\text{mm}} s + \beta}
 $$
 
 \vspace{0.5cm}
@@ -560,7 +562,7 @@ Scegliendo i parametri calcolati in precedenza, eseguiamo la simulazione del mod
 Il valore di regime risulta essere 
 
 \[
-    \omega_{regime}= 314\,rad/s=\omega_a
+    \omega_{regime}= 314\,rad/s=\omega_{nom}
 \]
 \vspace{0.3cm}
 
@@ -645,18 +647,18 @@ Dalla prima entry della tabella è possibile ricavare la costante tachimetrica.
 Tale segnale dev'essere compatibile con l'ingresso del microcontrollore, ovvero [Gnd, HighVoltage]. Pertanto, la sua uscita dev'essere mappata con un de-amplificatore.
 
 \[
-    k_{\text{deamp}} = \frac{\text{High\_voltage}}{\omega_{\text{nom}} \cdot k_{dt}}
+    k_{\text{deamp}} = \frac{High\_voltage}{\omega_{\text{nom}} \cdot k_{dt}}
 \]
 
 \vspace{0.3cm}
 
-In questo modo, alla velocità massima del motore corrisponderà una tensione in retroazione di $HighVoltage = 5V$ e a velocità nulla una tensione nulla.
+In questo modo, alla velocità massima del motore $w_{nom}$ corrisponderà una tensione in retroazione di $HighVoltage = 5V$ e a velocità nulla una tensione nulla.
 
 \vspace{0.5cm}
  
 Sceglieremo durante il progetto di fare simulazioni con una dinamo ideale o reale.
 
-Per la dinamo reale modelleremo la componente rumore con la sua sola armonica fondamentale, che ha: 
+Per la dinamo reale modelleremo la componente rumorosa con la sua sola armonica fondamentale, che ha: 
 
 \begin{itemize}
     \item Frequenza = Nlamelle $\cdot$ w (velocità di rotazione del motore)
@@ -665,7 +667,7 @@ Per la dinamo reale modelleremo la componente rumore con la sua sola armonica fo
 
 \vspace{0.5cm}
 
-In Simulink la dinamo è implementata come in Figura~\ref{fig:simulink_dinamo} ed è inserita nello schema totale di controllo come in Figura~\ref{fig:simulink_controllo_dinamo}.
+In Simulink la dinamo è implementata come in Figura~\ref{fig:simulink_dinamo} ed è inserita nello schema di controllo come in Figura~\ref{fig:simulink_controllo_dinamo}.
 
 \begin{figure}[h!]
 \centering
@@ -676,7 +678,7 @@ In Simulink la dinamo è implementata come in Figura~\ref{fig:simulink_dinamo} e
 
 \begin{figure}[h!]
 \centering
-    \includegraphics[scale=0.6]{Immagini/Altre/dinamoNelloSchemaSimulink.PNG}
+    \includegraphics[scale=0.65]{Immagini/Altre/dinamoNelloSchemaSimulink.PNG}
     \caption{Dinamo nello schema di controllo}
     \label{fig:simulink_controllo_dinamo}
 \end{figure}
@@ -686,18 +688,16 @@ In Simulink la dinamo è implementata come in Figura~\ref{fig:simulink_dinamo} e
 
 \subsubsection{Saturatore clamping in corrente}
 
-In fase di avvio del motore (o altri casi di discontinuità di funzionamento), la corrente di armatura raggiunge picchi molto alti e supera il valore nominale. In queste condizioni si danneggia il motore.
-
-Per questo motivo è stato necessario dotare il motore di un limitatore di corrente.
+In fase di avvio del motore (o altri casi di discontinuità), la corrente di armatura raggiunge picchi molto alti e supera il valore nominale. In queste condizioni si danneggia il motore. Pertanto, è stato necessario dotare il motore di un limitatore di corrente.
 
 \vspace{0.3cm}
 
 Il limitatore scelto di tipo "clamping" è costituito da un blocco soglia (DEAD ZONE) e da un guadagno. 
 
 Il blocco soglia fornisce un'uscita nulla per valori di ingresso tra le due soglie, mentre se l’ingresso assume valori al di fuori, restituisce in uscita la quantità in eccesso/difetto.
-Le soglie sono state fissate al valore della corrente di armatura nominale $I_{a} = 54~A$, consentito dal motore.
+Le soglie sono state fissate al valore della corrente di armatura nominale $I_{nom} = 54~A$, consentito dal motore.
 
-Il guadagno $k_{compenso}$ è stato trovato con taratura manuale monitorando la corrente a tensione d'ingresso massima, finché non è risultata completamente satura attorno a Ia, consentendo valori al più del $20\%$. 
+Il guadagno $k_{compenso}$ è stato trovato con taratura manuale monitorando la corrente a tensione d'ingresso massima, finché non è risultata completamente satura attorno a $I_{nom}$, consentendo valori al più del $20\%$. 
 
 Si è usato per la taratura, nello schema a ciclo chiuso, un regolatore fittizio a guadagno unitario e la dinamo supposta ideale.
 
@@ -709,14 +709,14 @@ L'implementazione Simulink è mostrata in Figura ~\ref{fig:simulink_controllo_am
 
 \begin{figure}[h!]
 \centering
-    \includegraphics[scale=0.7]{Immagini/Altre/amplificatoreSaturatoreSimulink.PNG}
+    \includegraphics[scale=0.8]{Immagini/Altre/amplificatoreSaturatoreSimulink.PNG}
     \caption{Amplificatore e saturatore nello schema di controllo}
     \label{fig:simulink_controllo_ampl_sat}
 \end{figure}
 
 \subsubsection{Riduttore}
 
-Dell'utilizzo del riduttore, al fine di adattare il motore alle specifiche in coppia e velocità della nostra applicazione, abbiamo già discusso.
+Abbiamo discusso nei precedenti paragrafi dell'utilizzo del riduttore, al fine di adattare il motore alla nostra applicazione.
 
 Mostriamo la sua modellazione Simulink in Figura ~\ref{fig:simulink_controllo_riduttore}.
 
@@ -848,7 +848,7 @@ In figura è riportato l'andamento della corrente di armatura e della velocità 
 \begin{figure}[h!]
     \centering
     \includegraphics[scale = 0.6]{Immagini/PlotMatlab/controlloSoloProporzionale.png}
-    \caption{Correnteìe velocità con Kp=1.22}
+    \caption{Corrente e velocità con Kp=1.22}
     \label{fig:kpscelto}
 \end{figure}
 
@@ -932,7 +932,7 @@ Il grafico delle risposte a gradino in funzione di $K_i$ evidenzia che all’aum
     \item diminuisce il tempo di risposta $T_a$.
 \end{itemize}
 
-Scegliendo un valore di $K_i$ che garantisce una sovraelongazione inferiore al 20\%, si è ottenuto un buon compromesso tra rapidità e stabilità della risposta.
+Scegliendo un valore di $K_i$ che garantisca una sovraelongazione limite al 20\%, si è ottenuto un buon compromesso tra rapidità e stabilità della risposta.
 
 
 \vspace{0.5cm}
@@ -944,7 +944,7 @@ Si osserva inoltre dalla Figura~\ref{fig:kiscelto} che, con i valori scelti, il 
 Immaginiamo di voler far generare il controllo dallo stesso microcontrollore usato per generare il riferimento.
 Questo può generare il segnale di controllo solo in un range limitato [Gnd, HighVoltage], quindi per valori superiori (o inferiori), il controllo sarà saturato.
 
-Le simulazioni\footnote{Qui non riportate} mostrano che l'aggiunta del blocco di saturazione in simulink(vedi Figura ~\ref{fig: regolatoreAntiWU})  non degrada le prestazioni, in quanto a saturare era già il blocco amplificatore.
+Le simulazioni\footnote{Qui non riportate} mostrano che l'aggiunta del blocco di saturazione in simulink (vedi Figura~\ref{fig: regolatoreAntiWU})  non degrada le prestazioni, in quanto a saturare era già il blocco amplificatore.
 
 Si manifesta però il fenomeno del wind-up sul controllo!
 
@@ -1009,7 +1009,7 @@ Introducendo la parte integrativa è stato garantito l'astatismo a gradino. Dall
 
 Per seguire la rampa con errore nullo, introduciamo il controllo in Feed Forward, azione in avanti che lega il controllo direttamente al riferimento, senza passare per l'errore.
 
-In particolare, prende il riferimento di velocità desiderato e lo riporta, tramite un puro guadagno $K_{ff}$ come contributo al controllo, come mostrato in Figura~\ref{fig: FFSimulink}. 
+In particolare, prende il riferimento di velocità desiderato e lo riporta, tramite un puro guadagno $K_{ff}$ come contributo al controllo (vedi Figura~\ref{fig: FFSimulink}). 
 
 \vspace{0.5cm}
 
@@ -1055,11 +1055,9 @@ Dopo aver progettato il controllore, ci occupiamo di modellare gli ingressi al s
 
 Fin'ora abbiamo tenuto il nostro motore a vuoto, ovvero senza carico (eccetto la struttura meccanica, la cui inerzia però è stata inglobata in quella del motore).
 
-Modelliamo la presenza di una persona sul nastro con una coppia di carico, in prima approssimazione come una coppia di attrito generata tra il tappeto e il rullo.
+Modelliamo la presenza di una persona sul nastro con una coppia di carico.
 
-\vspace{0.3cm}
-
-Nell'approssimazione più semplice, per una massa m che sale sul tapis roulant, coefficiente d'attrito $\mu$:
+In prima approssimazione posso pensare ad una coppia d'attrito tra il tappeto e il rullo. Dunque, con tale semplice modellistica, per una massa m che sale sul tapis roulant e coefficiente d'attrito $\mu$:
 
 \vspace{0.3cm}
 
@@ -1067,12 +1065,12 @@ Nell'approssimazione più semplice, per una massa m che sale sul tapis roulant, 
     F_{\text{attr}} = m_{\text{carico}} \cdot g \cdot \mu
 \]
 \[
-    M_{\text{attr}} = F_{\text{attr}} \cdot r_{\text{rotazionale}}
+    C_{\text{attr}} = F_{\text{attr}} \cdot r_{\text{rotazionale}}
 \]
 
-\vspace{0.1cm}
+\vspace{0.3cm}
 
-Ad esempio, con una massa di 120 kg otteniamo una coppia di carico di $Q_l = 1.47\,Nm$. Vediamo in Figura~\ref{fig: disturbo} la risposta del sistema a ingresso gradino + rampa, con e senza tale disturbo, modellato come un gradino.
+Ad esempio, con una $m=120\,kg$ otteniamo una coppia di carico di $Q_l = 1.47\,Nm$. Vediamo in Figura~\ref{fig: disturbo} la risposta del sistema a ingresso gradino + rampa, con e senza tale disturbo, modellato come un gradino.
 
 Siccome l'attrito viene generato solo dalla partenza, la coppia di carico avrà lo step time in corrispondenza dell'avvio del moto.
 
@@ -1114,7 +1112,7 @@ Le scelte progettuali, su base empirica, saranno le seguenti:
     \]
 \end{itemize}
 
-In Figure\ref{fig: leggiDIMoto}-\ref{fig: rispostaMorbida} è stata simulata una partenza da fermo fino a una velocità $v_{fin}=12\,km/h\Rightarrow w_{fin}=133.3\,rad/s$ scelta dall’utente.
+Nelle Figure \ref{fig: leggiDIMoto}-\ref{fig: rispostaMorbida} è riportata una simulazione di  partenza da fermo fino a una velocità $v_{fin}=12\,km/h\Rightarrow w_{fin}=133.3\,rad/s$ scelta dall’utente.
 
 \vspace{0.5cm}
 
@@ -1124,7 +1122,7 @@ In Figure\ref{fig: leggiDIMoto}-\ref{fig: rispostaMorbida} è stata simulata una
     \begin{minipage}{0.48\textwidth}
         \centering
         \includegraphics[scale = 0.5]{Immagini/PlotMatlab/leggiMotoDaFermo.png}
-        \caption{Riferimento, da leggi di moto}
+        \caption{Riferimento, leggi di moto}
         \label{fig: leggiDIMoto}
     \end{minipage}\hfill
     \begin{minipage}{0.48\textwidth}
