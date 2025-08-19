@@ -21,9 +21,9 @@ Azionamento per un motore DC / DC-motor-drive
 
 ### Utilizzo / Usage
 
-(IT) : Apri in matlab il file livescript script_matlab/AzionamentoMotoreDC_Schettini.mlx e run
+(IT) : Apri in matlab il file livescript script_matlab/AzionamentoMotoreDC_Schettini.mlx e poi premi su run
 
-(EN) : Open the livescript file script_matlab/AzionamentoMotoreDC_Schettini.mlx in matlab and run it
+(EN) : Open the livescript file script_matlab/AzionamentoMotoreDC_Schettini.mlx in matlab and then click on 'run'
 
 
 ---
