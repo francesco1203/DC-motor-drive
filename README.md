@@ -30,8 +30,8 @@ Azionamento per un motore DC / DC-motor-drive
 
 ### Struttura / Structure
 
-- script_matlab/    # codice sorgente / source code
-- tesina/           # relazione / report
+- script_matlab/   ( codice sorgente / source code)
+- tesina/          ( relazione / report)
 
 
 ---
