@@ -868,7 +868,7 @@ Studiamo la risposta a gradino del sistema al variare di Ki.  Vogliamo:
     \item sovraelongazione della riposta a gradino in velocità, del massimo $20\%$
 \end{itemize}
 
-Stavolta diamo in ingresso un piccolo step, preoccupandoci che non mandi in saturazione il sistema.
+Stavolta diamo in ingresso un piccolo step di ampiezza 0.01V, in modo tale che non mandi in saturazione il sistema (corrente).
 
 Non avendo problemi sul disturbo con la parte integrativa e avendo già tarato appositamente la parte proporzionale, userò il modello di dinamo ideale, ignorando il rumore.
 
@@ -897,12 +897,12 @@ Sono state eseguite delle simulazioni con uno script del tutto automatizzato che
         1.69  & 0.0000 \\
         2.20  & 0.0000 \\
         2.86  & 0.0000 \\
-        3.71  & 0.0021 \\
-        4.83  & 0.0263 \\
-        6.27  & 0.0641 \\
-        8.16  & 0.1134 \\
-        10.60 & 0.1902 \\
-        13.79 & 0.3014 \\
+        3.71  & 0.0020 \\
+        4.83  & 0.0260 \\
+        6.27  & 0.0629 \\
+        8.16  & 0.1062 \\
+        10.60 & 0.1534 \\
+        13.79 & 0.2032 \\
         \hline
     \end{tabular}
     \captionof{table}{Simulazioni}
@@ -1142,20 +1142,10 @@ Come si vede, la risposta del motore segue il riferimento, pur con un piccolissi
 
 Si osservi che tali leggi di moto sono facilmente generalizzabili al caso in cui si parta da qualsiasi velocità. L'integrale dell'accelerazione rappresenterà in quel caso la variazione della velocità a partire da un certo $v_0$.
 
-In Figura \ref{fig: decelazione} ad esempio, è riportata la generazione di una decelerazione da $v_0=12\,km/h \Rightarrow w_{0}=133.3\,rad/s $ a velocità $v_{fin}=5\,km/h\Rightarrow w_{fin}=55.6\,rad/s$.
-
 \vspace{0.5cm}
 
-\begin{figure}[h!]
-    \centering
-    \includegraphics[scale = 0.5]{Immagini/PlotMatlab/leggiMotoDecelerazione.png}
-    \caption{Riferimento in decelerazione}
-    \label{fig: decelazione}
-\end{figure}
-
-\vspace{0.5cm}
-
-Daremo per scontato che il microcontrollore sappia generare tali riferimenti con appositi algoritmi.
+In questo paragrafo ci siamo limitati a definire leggi del moto "morbide" e a verificare che il motore riesca a seguirle.
+Daremo per scontato che il microcontrollore in utilizzo sappia generare tali riferimenti con appositi algoritmi.
 
 \newpage
 
